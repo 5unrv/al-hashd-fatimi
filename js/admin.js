@@ -1,33 +1,79 @@
 // ===== Admin State =====
 let currentAdminTab = 'images';
-let editingItem = null;
 let uploadFiles = [];
+let repoContent = { images: [], videos: [], audios: [] };
+
+const GITHUB_TOKEN = sessionStorage.getItem('github_token') || '';
+const REPO = 'alhashedalfatimy/al-hashd-fatimi';
+const BRANCH = 'main';
 
 // ===== Initialize Admin =====
 document.addEventListener('DOMContentLoaded', async () => {
-  // Check auth
   if (!sessionStorage.getItem('admin_auth')) {
     window.location.href = 'index.html';
     return;
   }
 
+  // Ask for GitHub token if not stored
+  if (!GITHUB_TOKEN) {
+    const token = prompt('أدخل توكن GitHub الخاص بك (لرفع الملفات):\n\nيمكنك الحصول عليه من:\nhttps://github.com/settings/tokens\n\nاختر صلاحية repo فقط');
+    if (token) {
+      sessionStorage.setItem('github_token', token);
+      location.reload();
+    } else {
+      showToast('التوكن مطلوب لرفع الملفات', 'error');
+    }
+    return;
+  }
+
   try {
-    await initDB();
+    await loadContent();
     setupAdminListeners();
     loadAdminTab('images');
-
-    // Prevent screenshots (best effort)
-    if (document.documentElement.requestFullscreen) {
-      // Optional: auto fullscreen
-    }
   } catch (err) {
     console.error('Admin init error:', err);
+    showToast('خطأ في التحميل', 'error');
   }
 });
 
+// ===== Load Content from GitHub =====
+async function loadContent() {
+  try {
+    const resp = await fetch('https://raw.githubusercontent.com/' + REPO + '/' + BRANCH + '/content.json?nocache=' + Date.now());
+    if (resp.ok) {
+      repoContent = await resp.json();
+    }
+  } catch (err) {
+    console.error('Load content error:', err);
+    repoContent = { images: [], videos: [], audios: [] };
+  }
+}
+
+// ===== GitHub API Helper =====
+async function githubApi(path, method = 'GET', body = null) {
+  const url = path.startsWith('http') ? path : 'https://api.github.com/repos/' + REPO + path;
+  const options = {
+    method: method,
+    headers: {
+      'Authorization': 'token ' + GITHUB_TOKEN,
+      'Accept': 'application/vnd.github.v3+json',
+      'Content-Type': 'application/json',
+      'User-Agent': 'AlHashdAdmin'
+    }
+  };
+  if (body) options.body = JSON.stringify(body);
+
+  const resp = await fetch(url, options);
+  if (!resp.ok) {
+    const err = await resp.text();
+    throw new Error(err);
+  }
+  if (resp.status === 204) return null;
+  return await resp.json();
+}
+
 // ===== Event Listeners =====
 function setupAdminListeners() {
-  // Navigation
   document.querySelectorAll('.admin-nav-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.admin-nav-btn').forEach(b => b.classList.remove('active'));
@@ -36,13 +82,12 @@ function setupAdminListeners() {
     });
   });
 
-  // Logout
   document.getElementById('admin-logout')?.addEventListener('click', () => {
     sessionStorage.removeItem('admin_auth');
+    sessionStorage.removeItem('github_token');
     window.location.href = 'index.html';
   });
 
-  // Upload area
   const uploadArea = document.getElementById('upload-area');
   if (uploadArea) {
     uploadArea.addEventListener('click', () => document.getElementById('file-input').click());
@@ -53,7 +98,6 @@ function setupAdminListeners() {
 
   document.getElementById('file-input')?.addEventListener('change', handleFileSelect);
 
-  // Modal
   document.getElementById('modal-close')?.addEventListener('click', closeModal);
   document.getElementById('modal-overlay')?.addEventListener('click', (e) => {
     if (e.target.id === 'modal-overlay') closeModal();
@@ -63,20 +107,12 @@ function setupAdminListeners() {
 }
 
 // ===== Load Admin Tab =====
-async function loadAdminTab(tab) {
+function loadAdminTab(tab) {
   currentAdminTab = tab;
   const container = document.getElementById('admin-content');
-  container.innerHTML = '<div class="loading-spinner"></div>';
 
-  const storeMap = { images: STORES.IMAGES, videos: STORES.VIDEOS, audios: STORES.AUDIOS };
-  const store = storeMap[tab];
-
-  try {
-    const items = await getAllItems(store);
-    renderAdminTable(container, items, tab);
-  } catch (err) {
-    container.innerHTML = '<div class="empty-state">خطأ في التحميل</div>';
-  }
+  const items = repoContent[tab] || [];
+  renderAdminTable(container, items, tab);
 }
 
 function renderAdminTable(container, items, type) {
@@ -90,8 +126,6 @@ function renderAdminTable(container, items, type) {
     return;
   }
 
-  const typeLabel = type === 'images' ? 'صورة' : type === 'videos' ? 'فيديو' : 'مقطع صوتي';
-
   let html = `
     <table class="admin-table">
       <thead>
@@ -99,29 +133,21 @@ function renderAdminTable(container, items, type) {
           <th>المعاينة</th>
           <th>العنوان</th>
           <th>الوصف</th>
-          <th>مخفي</th>
-          <th>مميز</th>
-          <th>جديد</th>
-          <th>المشاهدات</th>
           <th>الإجراءات</th>
         </tr>
       </thead>
       <tbody>
   `;
 
-  for (const item of items) {
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
     html += `
-      <tr data-id="${item.id}">
-        <td><img src="${item.thumbnail || item.url || item.cover || ''}" alt="${item.title}" onerror="this.src='https://via.placeholder.com/60x40'"></td>
+      <tr>
+        <td><img src="${item.thumbnail || item.cover || item.url || ''}" alt="${item.title}" onerror="this.src='https://via.placeholder.com/60x40'"></td>
         <td>${escapeHtml(item.title)}</td>
         <td>${escapeHtml(item.description || '').substring(0, 50)}...</td>
-        <td><div class="toggle-switch ${item.hidden ? 'active' : ''}" data-field="hidden" data-id="${item.id}"></div></td>
-        <td><div class="toggle-switch ${item.featured ? 'active' : ''}" data-field="featured" data-id="${item.id}"></div></td>
-        <td><div class="toggle-switch ${item.latest ? 'active' : ''}" data-field="latest" data-id="${item.id}"></div></td>
-        <td>${item.views || 0}</td>
         <td>
-          <button class="admin-action-btn edit" data-id="${item.id}">تعديل</button>
-          <button class="admin-action-btn delete" data-id="${item.id}">حذف</button>
+          <button class="admin-action-btn delete" onclick="deleteItem(${i}, '${type}')">حذف</button>
         </td>
       </tr>
     `;
@@ -129,28 +155,6 @@ function renderAdminTable(container, items, type) {
 
   html += '</tbody></table>';
   container.innerHTML = html;
-
-  // Attach listeners
-  container.querySelectorAll('.toggle-switch').forEach(toggle => {
-    toggle.addEventListener('click', async () => {
-      const id = parseInt(toggle.dataset.id);
-      const field = toggle.dataset.field;
-      const storeMap = { images: STORES.IMAGES, videos: STORES.VIDEOS, audios: STORES.AUDIOS };
-      const item = await getItem(storeMap[currentAdminTab], id);
-      item[field] = !item[field];
-      await updateItem(storeMap[currentAdminTab], item);
-      toggle.classList.toggle('active');
-      showToast('تم التحديث', 'success');
-    });
-  });
-
-  container.querySelectorAll('.admin-action-btn.edit').forEach(btn => {
-    btn.addEventListener('click', () => openEditModal(parseInt(btn.dataset.id)));
-  });
-
-  container.querySelectorAll('.admin-action-btn.delete').forEach(btn => {
-    btn.addEventListener('click', () => deleteAdminItem(parseInt(btn.dataset.id)));
-  });
 }
 
 // ===== File Upload =====
@@ -169,22 +173,16 @@ function handleFileSelect(e) {
 function processFiles(files) {
   uploadFiles = files;
   if (files.length > 0) {
-    openUploadModal(files);
+    openUploadModal(files[0]);
   }
 }
 
-function openUploadModal(files) {
-  editingItem = null;
+function openUploadModal(file) {
   const modal = document.getElementById('modal-overlay');
-  document.getElementById('modal-title').textContent = 'إضافة محتوى جديد';
+  document.getElementById('modal-title').textContent = 'إضافة ' + (currentAdminTab === 'images' ? 'صورة' : currentAdminTab === 'videos' ? 'فيديو' : 'مقطع صوتي');
   document.getElementById('item-title').value = '';
   document.getElementById('item-desc').value = '';
-  document.getElementById('item-hidden').checked = false;
-  document.getElementById('item-featured').checked = false;
-  document.getElementById('item-latest').checked = true;
 
-  // Preview first file
-  const file = files[0];
   const preview = document.getElementById('modal-preview');
   const url = URL.createObjectURL(file);
 
@@ -199,103 +197,128 @@ function openUploadModal(files) {
   modal.classList.add('active');
 }
 
-function openEditModal(id) {
-  editingItem = id;
-  const storeMap = { images: STORES.IMAGES, videos: STORES.VIDEOS, audios: STORES.AUDIOS };
-
-  getItem(storeMap[currentAdminTab], id).then(item => {
-    const modal = document.getElementById('modal-overlay');
-    document.getElementById('modal-title').textContent = 'تعديل المحتوى';
-    document.getElementById('item-title').value = item.title || '';
-    document.getElementById('item-desc').value = item.description || '';
-    document.getElementById('item-hidden').checked = item.hidden || false;
-    document.getElementById('item-featured').checked = item.featured || false;
-    document.getElementById('item-latest').checked = item.latest || false;
-
-    const preview = document.getElementById('modal-preview');
-    if (item.url) {
-      if (currentAdminTab === 'images') {
-        preview.innerHTML = `<img src="${item.url}" style="max-width:100%;max-height:200px;border-radius:12px;">`;
-      } else if (currentAdminTab === 'videos') {
-        preview.innerHTML = `<video src="${item.url}" controls style="max-width:100%;max-height:200px;border-radius:12px;"></video>`;
-      } else {
-        preview.innerHTML = `<audio src="${item.url}" controls style="width:100%;"></audio>`;
-      }
-    }
-
-    modal.classList.add('active');
-  });
-}
-
 async function saveItem() {
   const title = document.getElementById('item-title').value.trim();
   const description = document.getElementById('item-desc').value.trim();
-  const hidden = document.getElementById('item-hidden').checked;
-  const featured = document.getElementById('item-featured').checked;
-  const latest = document.getElementById('item-latest').checked;
 
   if (!title) {
     showToast('العنوان مطلوب', 'error');
     return;
   }
 
-  const storeMap = { images: STORES.IMAGES, videos: STORES.VIDEOS, audios: STORES.AUDIOS };
-  const store = storeMap[currentAdminTab];
+  showToast('جاري الرفع...', 'info');
 
-  if (editingItem) {
-    // Update existing
-    const item = await getItem(store, editingItem);
-    item.title = title;
-    item.description = description;
-    item.hidden = hidden;
-    item.featured = featured;
-    item.latest = latest;
-    await updateItem(store, item);
-    showToast('تم التحديث بنجاح', 'success');
-  } else {
-    // Create new from files
-    for (const file of uploadFiles) {
-      const url = URL.createObjectURL(file);
-      const item = {
+  try {
+    if (uploadFiles.length > 0) {
+      // Upload file to GitHub
+      const file = uploadFiles[0];
+      const filename = Date.now() + '_' + file.name.replace(/\s+/g, '_');
+      const repoPath = 'uploads/' + filename;
+
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onloadend = async function() {
+        const base64 = reader.result.split(',')[1];
+
+        // Upload to GitHub
+        await githubApi('/contents/' + repoPath, 'PUT', {
+          message: 'Upload ' + filename,
+          content: base64,
+          branch: BRANCH
+        });
+
+        const fileUrl = 'https://raw.githubusercontent.com/' + REPO + '/' + BRANCH + '/' + repoPath;
+
+        const newItem = {
+          id: Date.now(),
+          title: title,
+          description: description,
+          url: fileUrl,
+          type: currentAdminTab === 'images' ? 'image' : currentAdminTab === 'videos' ? 'video' : 'audio'
+        };
+
+        if (currentAdminTab === 'images') {
+          newItem.thumbnail = fileUrl;
+        } else if (currentAdminTab === 'videos') {
+          newItem.thumbnail = fileUrl;
+        } else {
+          newItem.cover = fileUrl;
+          newItem.duration = '--:--';
+        }
+
+        repoContent[currentAdminTab].push(newItem);
+        await saveContentJson();
+
+        closeModal();
+        loadAdminTab(currentAdminTab);
+        showToast('تم الرفع بنجاح!', 'success');
+      };
+    } else {
+      // URL only (for external links)
+      const url = prompt('أدخل رابط الملف:');
+      if (!url) return;
+
+      const newItem = {
+        id: Date.now(),
         title: title,
         description: description,
         url: url,
-        hidden: hidden,
-        featured: featured,
-        latest: latest,
         type: currentAdminTab === 'images' ? 'image' : currentAdminTab === 'videos' ? 'video' : 'audio'
       };
 
       if (currentAdminTab === 'images') {
-        item.thumbnail = url;
+        newItem.thumbnail = url;
       } else if (currentAdminTab === 'videos') {
-        item.thumbnail = url;
+        newItem.thumbnail = url;
       } else {
-        item.cover = url;
-        item.duration = '--:--';
+        newItem.cover = url;
+        newItem.duration = '--:--';
       }
 
-      await addItem(store, item);
-    }
-    showToast('تم الإضافة بنجاح', 'success');
-  }
+      repoContent[currentAdminTab].push(newItem);
+      await saveContentJson();
 
-  closeModal();
-  loadAdminTab(currentAdminTab);
+      closeModal();
+      loadAdminTab(currentAdminTab);
+      showToast('تم الإضافة!', 'success');
+    }
+  } catch (err) {
+    console.error(err);
+    showToast('خطأ في الرفع: ' + err.message, 'error');
+  }
 }
 
-async function deleteAdminItem(id) {
+async function deleteItem(index, type) {
   if (!confirm('هل أنت متأكد من الحذف؟')) return;
 
-  const storeMap = { images: STORES.IMAGES, videos: STORES.VIDEOS, audios: STORES.AUDIOS };
-  await deleteItem(storeMap[currentAdminTab], id);
-  showToast('تم الحذف بنجاح', 'success');
-  loadAdminTab(currentAdminTab);
+  repoContent[type].splice(index, 1);
+  await saveContentJson();
+  loadAdminTab(type);
+  showToast('تم الحذف', 'success');
+}
+
+async function saveContentJson() {
+  const content = btoa(unescape(encodeURIComponent(JSON.stringify(repoContent, null, 2))));
+
+  // Get current SHA
+  let sha = null;
+  try {
+    const data = await githubApi('/contents/content.json');
+    sha = data.sha;
+  } catch (e) {}
+
+  const body = {
+    message: 'Update content.json via admin panel',
+    content: content,
+    branch: BRANCH
+  };
+  if (sha) body.sha = sha;
+
+  await githubApi('/contents/content.json', 'PUT', body);
 }
 
 function closeModal() {
   document.getElementById('modal-overlay').classList.remove('active');
-  editingItem = null;
   uploadFiles = [];
 }
 
