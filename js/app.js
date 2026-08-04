@@ -38,14 +38,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ===== Load Content from JSON =====
 async function loadContent() {
   try {
-    // Add cache-buster to always get fresh content
-    const cacheBuster = '?v=' + Date.now();
-    const response = await fetch('content.json' + cacheBuster, { cache: 'no-store' });
+    // Force fresh content - NEVER use cache
+    const response = await fetch('content.json', {
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache' }
+    });
     if (!response.ok) throw new Error('Failed to load content');
     allContent = await response.json();
   } catch (err) {
     console.error('Content load error:', err);
-    // Fallback to empty
     allContent = { images: [], videos: [], audios: [] };
   }
 }
@@ -520,4 +521,14 @@ function setupSwipeGestures() {
       navigateViewer(diff > 0 ? 1 : -1);
     }
   });
+}
+
+
+// ===== Admin: Reload Content =====
+async function reloadContent() {
+  await loadContent();
+  loadHomeStats();
+  if (currentSection === 'images') loadImages();
+  if (currentSection === 'videos') loadVideos();
+  if (currentSection === 'audios') loadAudios();
 }
