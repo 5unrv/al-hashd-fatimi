@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0a0a0a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>لوحة الإدارة - الحشد الفاطمي</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+  <link rel="icon" type="image/png" href="icons/icon-72x72.png">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* Admin specific styles */
+    body { background: var(--primary-black); }
+    .admin-main { min-height: 100vh; }
+  </style>
+</head>
+<body>
+  <div class="bg-gradient"></div>
+  <div class="bg-noise"></div>
+
+  <div class="admin-main" id="admin-main">
+    <!-- Admin Header -->
+    <div class="admin-header">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <img src="icons/icon-192x192.png" alt="شعار" style="width:40px;height:40px;border-radius:10px;border:1px solid var(--gold);">
+        <span style="color:var(--gold);font-weight:700;font-size:1.2rem;">لوحة الإدارة</span>
+      </div>
+      <button class="submit-btn" id="admin-logout" style="padding:10px 24px;font-size:0.9rem;">خروج</button>
+    </div>
+
+    <!-- Admin Nav -->
+    <div class="admin-nav">
+      <button class="admin-nav-btn active" data-tab="images">🖼 الصور</button>
+      <button class="admin-nav-btn" data-tab="videos">🎥 الفيديوهات</button>
+      <button class="admin-nav-btn" data-tab="audios">🎧 المقاطع الصوتية</button>
+    </div>
+
+    <!-- Upload Area -->
+    <div class="admin-content">
+      <div class="upload-area" id="upload-area">
+        <div class="upload-icon">📤</div>
+        <div class="upload-text">اسحب الملفات هنا أو اضغط للاختيار</div>
+        <input type="file" id="file-input" multiple accept="image/*,video/*,audio/*" style="display:none;">
+      </div>
+
+      <!-- Content Table -->
+      <div id="admin-content"></div>
+    </div>
+  </div>
+
+  <!-- Edit/Add Modal -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="glass-panel modal-content">
+      <button class="modal-close" id="modal-close">✕</button>
+      <h3 class="modal-title" id="modal-title">إضافة محتوى</h3>
+      <div id="modal-preview" style="margin-bottom:20px;text-align:center;"></div>
+      <div class="form-group">
+        <label class="form-label">العنوان</label>
+        <input type="text" class="form-input" id="item-title" placeholder="عنوان المحتوى">
+      </div>
+      <div class="form-group">
+        <label class="form-label">الوصف</label>
+        <textarea class="form-textarea" id="item-desc" placeholder="وصف المحتوى"></textarea>
+      </div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;margin:16px 0;">
+        <label style="display:flex;align-items:center;gap:8px;color:var(--text-secondary);cursor:pointer;">
+          <input type="checkbox" id="item-hidden" style="width:18px;height:18px;accent-color:var(--gold);">
+          <span>مخفي</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;color:var(--text-secondary);cursor:pointer;">
+          <input type="checkbox" id="item-featured" style="width:18px;height:18px;accent-color:var(--gold);">
+          <span>مميز</span>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;color:var(--text-secondary);cursor:pointer;">
+          <input type="checkbox" id="item-latest" style="width:18px;height:18px;accent-color:var(--gold);" checked>
+          <span>جديد</span>
+        </label>
+      </div>
+      <button class="submit-btn" id="save-item-btn" style="width:100%;">حفظ</button>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script src="js/db.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>
