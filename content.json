@@ -1,14 +1,14 @@
 {
-  "images": [],
-  "videos": [
+  "images": [
     {
-      "id": 1785872734240,
+      "id": 1785872990281,
       "title": "حرم الامام الحسين عليه السلام",
-      "description": "تصوير ام الحسن",
-      "url": "https://raw.githubusercontent.com/alhashedalfatimy/al-hashd-fatimi/main/uploads/1785872726253_ilovhussein_14050513_221545825.mp4",
-      "type": "video",
-      "thumbnail": "https://raw.githubusercontent.com/alhashedalfatimy/al-hashd-fatimi/main/uploads/1785872726253_ilovhussein_14050513_221545825.mp4"
+      "description": "تصويري",
+      "url": "https://raw.githubusercontent.com/alhashedalfatimy/al-hashd-fatimi/main/uploads/1785872983862_IMG_20260801_210504.jpg",
+      "type": "image",
+      "thumbnail": "https://raw.githubusercontent.com/alhashedalfatimy/al-hashd-fatimi/main/uploads/1785872983862_IMG_20260801_210504.jpg"
     }
   ],
+  "videos": [],
   "audios": []
 }
