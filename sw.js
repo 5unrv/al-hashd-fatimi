@@ -1,4 +1,4 @@
-const CACHE_NAME = 'al-hashd-fatimi-v1';
+const CACHE_NAME = 'al-hashd-fatimi-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -12,7 +12,9 @@ const STATIC_ASSETS = [
   '/icons/icon-512x512.png'
 ];
 
-// Install event
+// NEVER cache content.json - always fetch fresh
+const NEVER_CACHE = ['/content.json'];
+
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -21,7 +23,6 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Activate event
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -34,14 +35,24 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch event - Network First with Cache Fallback
 self.addEventListener('fetch', (event) => {
   const { request } = event;
+  const url = new URL(request.url);
 
-  // Skip non-GET requests
+  // NEVER cache content.json - always network first
+  if (NEVER_CACHE.some(path => url.pathname.includes(path))) {
+    event.respondWith(
+      fetch(request, { cache: 'no-store' }).catch(() => {
+        return new Response('{"images":[],"videos":[],"audios":[]}', {
+          headers: { 'Content-Type': 'application/json' }
+        });
+      })
+    );
+    return;
+  }
+
   if (request.method !== 'GET') return;
 
-  // For media files, use Cache First
   if (request.url.match(/\.(jpg|jpeg|png|gif|webp|mp4|mp3|webm|ogg)$/)) {
     event.respondWith(
       caches.match(request).then((cached) => {
@@ -56,7 +67,6 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // For other requests, Network First
   event.respondWith(
     fetch(request).then((response) => {
       const clone = response.clone();
@@ -65,7 +75,6 @@ self.addEventListener('fetch', (event) => {
     }).catch(() => {
       return caches.match(request).then((cached) => {
         if (cached) return cached;
-        // Return offline fallback for navigation requests
         if (request.mode === 'navigate') {
           return caches.match('/index.html');
         }
@@ -74,15 +83,3 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
-
-// Background sync for admin actions
-self.addEventListener('sync', (event) => {
-  if (event.tag === 'sync-content') {
-    event.waitUntil(syncContent());
-  }
-});
-
-async function syncContent() {
-  // Background sync placeholder
-  console.log('Background sync triggered');
-}
