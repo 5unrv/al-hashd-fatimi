@@ -40,7 +40,7 @@
     </div>
 
     <!-- Categories Grid -->
-    <div class="categories-grid">
+    <div class="categories-grid" style="grid-template-columns: repeat(2, 1fr); max-width: 600px;">
       <div class="glass-card category-card" onclick="navigateTo('images')">
         <div class="category-icon">🖼</div>
         <div class="category-name">الصور</div>
@@ -56,30 +56,15 @@
         <div class="category-name">المقاطع الصوتية</div>
         <div class="category-count" id="count-audios">0</div>
       </div>
-      <div class="glass-card category-card" onclick="navigateTo('latest')">
-        <div class="category-icon">⭐</div>
-        <div class="category-name">أحدث الإضافات</div>
-        <div class="category-count">جديد</div>
-      </div>
-      <div class="glass-card category-card" onclick="navigateTo('popular')">
-        <div class="category-icon">🔥</div>
-        <div class="category-name">الأكثر مشاهدة</div>
-        <div class="category-count">شائع</div>
-      </div>
-      <div class="glass-card category-card" onclick="navigateTo('favorites')">
-        <div class="category-icon">❤️</div>
-        <div class="category-name">المفضلة</div>
-        <div class="category-count" id="count-favorites">0</div>
+      <div class="glass-card category-card" onclick="navigateTo('tips')">
+        <div class="category-icon">💡</div>
+        <div class="category-name">نصائح مهمة</div>
+        <div class="category-count">مفيد</div>
       </div>
       <div class="glass-card category-card" onclick="navigateTo('about')">
         <div class="category-icon">ℹ️</div>
         <div class="category-name">حول التطبيق</div>
         <div class="category-count">معلومات</div>
-      </div>
-      <div class="glass-card category-card" onclick="navigateTo('contact')">
-        <div class="category-icon">📩</div>
-        <div class="category-name">تواصل معنا</div>
-        <div class="category-count">راسلنا</div>
       </div>
     </div>
   </div>
@@ -114,44 +99,41 @@
     <div class="audio-list" id="audios-list"></div>
   </div>
 
-  <!-- ===== LATEST SECTION ===== -->
-  <div id="section-latest" class="section-container">
-    <button class="back-btn" onclick="goHome()">← الرئيسية</button>
-    <div class="section-title">
-      <h2>⭐ أحدث الإضافات</h2>
-      <div class="section-line"></div>
-    </div>
-    <div class="section-title" style="margin-top:16px;"><h2 style="font-size:1.1rem;">صور</h2><div class="section-line"></div></div>
-    <div class="media-grid" id="latest-images"></div>
-    <div class="section-title" style="margin-top:16px;"><h2 style="font-size:1.1rem;">فيديوهات</h2><div class="section-line"></div></div>
-    <div class="media-grid" id="latest-videos"></div>
-    <div class="section-title" style="margin-top:16px;"><h2 style="font-size:1.1rem;">مقاطع صوتية</h2><div class="section-line"></div></div>
-    <div class="audio-list" id="latest-audios"></div>
-  </div>
 
-  <!-- ===== POPULAR SECTION ===== -->
-  <div id="section-popular" class="section-container">
-    <button class="back-btn" onclick="goHome()">← الرئيسية</button>
-    <div class="section-title">
-      <h2>🔥 الأكثر مشاهدة</h2>
-      <div class="section-line"></div>
-    </div>
-    <div class="section-title" style="margin-top:16px;"><h2 style="font-size:1.1rem;">صور</h2><div class="section-line"></div></div>
-    <div class="media-grid" id="popular-images"></div>
-    <div class="section-title" style="margin-top:16px;"><h2 style="font-size:1.1rem;">فيديوهات</h2><div class="section-line"></div></div>
-    <div class="media-grid" id="popular-videos"></div>
-    <div class="section-title" style="margin-top:16px;"><h2 style="font-size:1.1rem;">مقاطع صوتية</h2><div class="section-line"></div></div>
-    <div class="audio-list" id="popular-audios"></div>
-  </div>
 
-  <!-- ===== FAVORITES SECTION ===== -->
-  <div id="section-favorites" class="section-container">
+
+
+
+
+  <!-- ===== TIPS SECTION ===== -->
+  <div id="section-tips" class="section-container">
     <button class="back-btn" onclick="goHome()">← الرئيسية</button>
     <div class="section-title">
-      <h2>❤️ المفضلة</h2>
+      <h2>💡 نصائح مهمة</h2>
       <div class="section-line"></div>
     </div>
-    <div class="media-grid" id="favorites-grid"></div>
+    <div class="about-content" style="padding-bottom:40px;">
+      <div class="glass-card" style="padding:24px;margin-bottom:16px;text-align:right;">
+        <h3 style="color:var(--gold);margin-bottom:12px;">🎯 النصيحة الأولى</h3>
+        <p style="color:var(--text-secondary);line-height:1.8;">حافظ على هدوئك وثباتك في جميع الظروف، فالحكمة تبدأ من السيطرة على النفس.</p>
+      </div>
+      <div class="glass-card" style="padding:24px;margin-bottom:16px;text-align:right;">
+        <h3 style="color:var(--gold);margin-bottom:12px;">📿 النصيحة الثانية</h3>
+        <p style="color:var(--text-secondary);line-height:1.8;">أكثر من ذكر الله فإنه يطمئن القلوب ويشرح الصدور.</p>
+      </div>
+      <div class="glass-card" style="padding:24px;margin-bottom:16px;text-align:right;">
+        <h3 style="color:var(--gold);margin-bottom:12px;">🤝 النصيحة الثالثة</h3>
+        <p style="color:var(--text-secondary);line-height:1.8;">صلة الرحم من أعظم الأعمال التي تُسبب بسط الرزق وإنْ طالَ عمرُ الإنسان.</p>
+      </div>
+      <div class="glass-card" style="padding:24px;margin-bottom:16px;text-align:right;">
+        <h3 style="color:var(--gold);margin-bottom:12px;">📚 النصيحة الرابعة</h3>
+        <p style="color:var(--text-secondary);line-height:1.8;">اطلب العلم من المهد إلى اللحد، فالعلم نور يهدي صاحبه إلى الصراط المستقيم.</p>
+      </div>
+      <div class="glass-card" style="padding:24px;margin-bottom:16px;text-align:right;">
+        <h3 style="color:var(--gold);margin-bottom:12px;">🌙 النصيحة الخامسة</h3>
+        <p style="color:var(--text-secondary);line-height:1.8;">صلاة الفجر جماعة خير من الدنيا وما فيها، فلا تفوتها بأي حال.</p>
+      </div>
+    </div>
   </div>
 
   <!-- ===== ABOUT SECTION ===== -->
@@ -176,36 +158,7 @@
     </div>
   </div>
 
-  <!-- ===== CONTACT SECTION ===== -->
-  <div id="section-contact" class="section-container">
-    <button class="back-btn" onclick="goHome()">← الرئيسية</button>
-    <div class="section-title">
-      <h2>📩 تواصل معنا</h2>
-      <div class="section-line"></div>
-    </div>
-    <form class="contact-form" id="contact-form">
-      <div class="form-group">
-        <label class="form-label">الاسم</label>
-        <input type="text" class="form-input" id="contact-name" placeholder="أدخل اسمك" required>
-      </div>
-      <div class="form-group">
-        <label class="form-label">البريد الإلكتروني</label>
-        <input type="email" class="form-input" id="contact-email" placeholder="example@email.com" required>
-      </div>
-      <div class="form-group">
-        <label class="form-label">الرسالة</label>
-        <textarea class="form-textarea" id="contact-message" placeholder="اكتب رسالتك هنا..." required></textarea>
-      </div>
-      <button type="submit" class="submit-btn">إرسال الرسالة</button>
-    </form>
-    <div class="social-links">
-      <a href="#" class="social-btn" title="تويتر">🐦</a>
-      <a href="#" class="social-btn" title="فيسبوك">📘</a>
-      <a href="#" class="social-btn" title="إنستغرام">📷</a>
-      <a href="#" class="social-btn" title="يوتيوب">▶️</a>
-      <a href="#" class="social-btn" title="تلغرام">✈️</a>
-    </div>
-  </div>
+
 
   <!-- ===== MEDIA VIEWER ===== -->
   <div class="media-viewer" id="media-viewer">
