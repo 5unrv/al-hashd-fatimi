@@ -9,6 +9,7 @@ let audioList = [];
 let logoClickCount = 0;
 let logoPressTimer = null;
 let deferredPrompt = null;
+let allContent = { images: [], videos: [], audios: [] };
 
 // ===== DOM Elements =====
 const sections = {
@@ -16,18 +17,14 @@ const sections = {
   images: document.getElementById('section-images'),
   videos: document.getElementById('section-videos'),
   audios: document.getElementById('section-audios'),
-  latest: document.getElementById('section-latest'),
-  popular: document.getElementById('section-popular'),
-  favorites: document.getElementById('section-favorites'),
-  about: document.getElementById('section-about'),
-  contact: document.getElementById('section-contact')
+  about: document.getElementById('section-about')
 };
 
 // ===== Initialize App =====
 document.addEventListener('DOMContentLoaded', async () => {
   try {
+    await loadContent();
     await initDB();
-    await seedDemoData();
     setupEventListeners();
     setupPWA();
     loadHomeStats();
@@ -38,9 +35,23 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
+// ===== Load Content from JSON =====
+async function loadContent() {
+  try {
+    // Add cache-buster to always get fresh content
+    const cacheBuster = '?v=' + Date.now();
+    const response = await fetch('content.json' + cacheBuster, { cache: 'no-store' });
+    if (!response.ok) throw new Error('Failed to load content');
+    allContent = await response.json();
+  } catch (err) {
+    console.error('Content load error:', err);
+    // Fallback to empty
+    allContent = { images: [], videos: [], audios: [] };
+  }
+}
+
 // ===== Event Listeners =====
 function setupEventListeners() {
-  // Logo secret access
   const logo = document.getElementById('app-logo');
   if (logo) {
     logo.addEventListener('click', handleLogoClick);
@@ -51,41 +62,30 @@ function setupEventListeners() {
     logo.addEventListener('mouseleave', handleLogoPressEnd);
   }
 
-  // Search
   const searchInput = document.getElementById('search-input');
   if (searchInput) {
     searchInput.addEventListener('input', debounce(handleSearch, 300));
   }
 
-  // Media viewer
   document.getElementById('viewer-close')?.addEventListener('click', closeViewer);
   document.getElementById('viewer-prev')?.addEventListener('click', () => navigateViewer(-1));
   document.getElementById('viewer-next')?.addEventListener('click', () => navigateViewer(1));
   document.getElementById('viewer-download')?.addEventListener('click', downloadCurrentMedia);
   document.getElementById('viewer-share')?.addEventListener('click', shareCurrentMedia);
 
-  // Audio player
   document.getElementById('player-play')?.addEventListener('click', toggleAudioPlay);
   document.getElementById('player-prev')?.addEventListener('click', playPrevAudio);
   document.getElementById('player-next')?.addEventListener('click', playNextAudio);
   document.getElementById('player-progress')?.addEventListener('click', seekAudio);
 
-  // Admin login
   document.getElementById('admin-login-btn')?.addEventListener('click', handleAdminLogin);
   document.getElementById('admin-overlay')?.addEventListener('click', (e) => {
     if (e.target.id === 'admin-overlay') closeAdminLogin();
   });
 
-  // Contact form
-  document.getElementById('contact-form')?.addEventListener('submit', handleContactSubmit);
-
-  // Install button
   document.getElementById('install-btn')?.addEventListener('click', installPWA);
 
-  // Keyboard shortcuts
   document.addEventListener('keydown', handleKeyboard);
-
-  // Swipe gestures for viewer
   setupSwipeGestures();
 }
 
@@ -122,7 +122,6 @@ function navigateTo(section) {
     currentSection = section;
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    // Load section data
     switch(section) {
       case 'images': loadImages(); break;
       case 'videos': loadVideos(); break;
@@ -136,131 +135,35 @@ function goHome() {
 }
 
 // ===== Home Stats =====
-async function loadHomeStats() {
-  try {
-    const images = await getAllItems(STORES.IMAGES, { hidden: false });
-    const videos = await getAllItems(STORES.VIDEOS, { hidden: false });
-    const audios = await getAllItems(STORES.AUDIOS, { hidden: false });
-    document.getElementById('count-images').textContent = images.length;
-    document.getElementById('count-videos').textContent = videos.length;
-    document.getElementById('count-audios').textContent = audios.length;
-  } catch (err) {
-    console.error('Stats error:', err);
-  }
+function loadHomeStats() {
+  document.getElementById('count-images').textContent = allContent.images?.length || 0;
+  document.getElementById('count-videos').textContent = allContent.videos?.length || 0;
+  document.getElementById('count-audios').textContent = allContent.audios?.length || 0;
 }
 
 // ===== Load Media Sections =====
-async function loadImages() {
+function loadImages() {
   const container = document.getElementById('images-grid');
   if (!container) return;
-  container.innerHTML = '<div class="loading-spinner"></div>';
-
-  try {
-    const images = await getAllItems(STORES.IMAGES, { hidden: false });
-    renderMediaGrid(container, images, 'image');
-  } catch (err) {
-    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🖼</div><div class="empty-state-text">لا توجد صور</div></div>';
-  }
+  renderMediaGrid(container, allContent.images || [], 'image');
 }
 
-async function loadVideos() {
+function loadVideos() {
   const container = document.getElementById('videos-grid');
   if (!container) return;
-  container.innerHTML = '<div class="loading-spinner"></div>';
-
-  try {
-    const videos = await getAllItems(STORES.VIDEOS, { hidden: false });
-    renderMediaGrid(container, videos, 'video');
-  } catch (err) {
-    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🎥</div><div class="empty-state-text">لا توجد فيديوهات</div></div>';
-  }
+  renderMediaGrid(container, allContent.videos || [], 'video');
 }
 
-async function loadAudios() {
+function loadAudios() {
   const container = document.getElementById('audios-list');
   if (!container) return;
-  container.innerHTML = '<div class="loading-spinner"></div>';
-
-  try {
-    const audios = await getAllItems(STORES.AUDIOS, { hidden: false });
-    audioList = audios;
-    renderAudioList(container, audios);
-  } catch (err) {
-    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🎧</div><div class="empty-state-text">لا توجد مقاطع صوتية</div></div>';
-  }
-}
-
-async function loadLatest() {
-  const imgContainer = document.getElementById('latest-images');
-  const vidContainer = document.getElementById('latest-videos');
-  const audContainer = document.getElementById('latest-audios');
-
-  try {
-    const images = await getAllItems(STORES.IMAGES, { hidden: false, latest: true });
-    const videos = await getAllItems(STORES.VIDEOS, { hidden: false, latest: true });
-    const audios = await getAllItems(STORES.AUDIOS, { hidden: false, latest: true });
-
-    if (imgContainer) renderMediaGrid(imgContainer, images, 'image');
-    if (vidContainer) renderMediaGrid(vidContainer, videos, 'video');
-    if (audContainer) renderAudioList(audContainer, audios);
-  } catch (err) {
-    console.error('Latest error:', err);
-  }
-}
-
-async function loadPopular() {
-  const imgContainer = document.getElementById('popular-images');
-  const vidContainer = document.getElementById('popular-videos');
-  const audContainer = document.getElementById('popular-audios');
-
-  try {
-    let images = await getAllItems(STORES.IMAGES, { hidden: false });
-    let videos = await getAllItems(STORES.VIDEOS, { hidden: false });
-    let audios = await getAllItems(STORES.AUDIOS, { hidden: false });
-
-    images = images.sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 6);
-    videos = videos.sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 6);
-    audios = audios.sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 6);
-
-    if (imgContainer) renderMediaGrid(imgContainer, images, 'image');
-    if (vidContainer) renderMediaGrid(vidContainer, videos, 'video');
-    if (audContainer) renderAudioList(audContainer, audios);
-  } catch (err) {
-    console.error('Popular error:', err);
-  }
-}
-
-async function loadFavorites() {
-  const container = document.getElementById('favorites-grid');
-  if (!container) return;
-  container.innerHTML = '<div class="loading-spinner"></div>';
-
-  try {
-    const favorites = await getFavorites();
-    if (favorites.length === 0) {
-      container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">❤️</div><div class="empty-state-text">لا توجد مفضلات</div></div>';
-      return;
-    }
-
-    let html = '';
-    for (const fav of favorites) {
-      const item = fav.data;
-      if (item.type === 'audio') {
-        html += createAudioCard(item);
-      } else {
-        html += createMediaCard(item, item.type);
-      }
-    }
-    container.innerHTML = html;
-    attachMediaListeners(container);
-  } catch (err) {
-    container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">❤️</div><div class="empty-state-text">لا توجد مفضلات</div></div>';
-  }
+  audioList = allContent.audios || [];
+  renderAudioList(container, audioList);
 }
 
 // ===== Render Functions =====
 function renderMediaGrid(container, items, type) {
-  if (items.length === 0) {
+  if (!items || items.length === 0) {
     container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📂</div><div class="empty-state-text">لا يوجد محتوى</div></div>';
     return;
   }
@@ -270,7 +173,6 @@ function renderMediaGrid(container, items, type) {
 }
 
 function createMediaCard(item, type) {
-  const isFav = item.isFavorite ? 'active' : '';
   return `
     <div class="glass-card media-card fade-in" data-id="${item.id}" data-type="${type}">
       <img src="${item.thumbnail || item.url}" alt="${item.title}" loading="lazy">
@@ -279,7 +181,6 @@ function createMediaCard(item, type) {
         <div class="media-desc">${escapeHtml(item.description || '')}</div>
       </div>
       <div class="media-actions">
-        <button class="action-btn fav-btn ${isFav}" data-id="${item.id}" data-type="${type}" title="مفضلة">❤</button>
         <button class="action-btn share-btn" data-id="${item.id}" data-type="${type}" title="مشاركة">↗</button>
       </div>
     </div>
@@ -287,7 +188,7 @@ function createMediaCard(item, type) {
 }
 
 function renderAudioList(container, items) {
-  if (items.length === 0) {
+  if (!items || items.length === 0) {
     container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🎧</div><div class="empty-state-text">لا توجد مقاطع صوتية</div></div>';
     return;
   }
@@ -311,7 +212,6 @@ function createAudioCard(item, index = 0) {
 }
 
 function attachMediaListeners(container) {
-  // Card click - open viewer
   container.querySelectorAll('.media-card').forEach(card => {
     card.addEventListener('click', async (e) => {
       if (e.target.closest('.action-btn')) return;
@@ -321,22 +221,6 @@ function attachMediaListeners(container) {
     });
   });
 
-  // Favorite button
-  container.querySelectorAll('.fav-btn').forEach(btn => {
-    btn.addEventListener('click', async (e) => {
-      e.stopPropagation();
-      const id = parseInt(btn.dataset.id);
-      const type = btn.dataset.type;
-      const store = type === 'image' ? STORES.IMAGES : type === 'video' ? STORES.VIDEOS : STORES.AUDIOS;
-      const item = await getItem(store, id);
-      item.type = type;
-      const added = await toggleFavorite(item);
-      btn.classList.toggle('active', added);
-      showToast(added ? 'تمت الإضافة للمفضلة' : 'تمت الإزالة من المفضلة', 'success');
-    });
-  });
-
-  // Share button
   container.querySelectorAll('.share-btn').forEach(btn => {
     btn.addEventListener('click', async (e) => {
       e.stopPropagation();
@@ -367,14 +251,12 @@ function attachAudioListeners(container) {
 
 // ===== Media Viewer =====
 async function openViewer(id, type) {
-  const store = type === 'image' ? STORES.IMAGES : type === 'video' ? STORES.VIDEOS : STORES.AUDIOS;
-  const items = await getAllItems(store, { hidden: false });
-  currentMedia = items;
-  currentMediaIndex = items.findIndex(i => i.id === id);
+  const items = type === 'image' ? allContent.images : type === 'video' ? allContent.videos : allContent.audios;
+  currentMedia = items || [];
+  currentMediaIndex = currentMedia.findIndex(i => i.id === id);
 
   if (currentMediaIndex === -1) return;
 
-  await incrementViews(store, id);
   updateViewerContent();
 
   const viewer = document.getElementById('media-viewer');
@@ -432,8 +314,9 @@ async function shareCurrentMedia() {
 }
 
 async function shareMedia(id, type) {
-  const store = type === 'image' ? STORES.IMAGES : type === 'video' ? STORES.VIDEOS : STORES.AUDIOS;
-  const item = await getItem(store, id);
+  const items = type === 'image' ? allContent.images : type === 'video' ? allContent.videos : allContent.audios;
+  const item = items.find(i => i.id === id);
+  if (!item) return;
 
   if (navigator.share) {
     try {
@@ -442,9 +325,7 @@ async function shareMedia(id, type) {
         text: item.description,
         url: item.url
       });
-    } catch (err) {
-      // User cancelled
-    }
+    } catch (err) {}
   } else {
     await navigator.clipboard.writeText(item.url);
     showToast('تم نسخ الرابط', 'success');
@@ -467,13 +348,10 @@ function playAudioAt(index) {
   audioPlayer.play();
   isPlaying = true;
 
-  // Update player bar
   document.getElementById('player-cover').src = item.cover || item.thumbnail || 'https://via.placeholder.com/48';
   document.getElementById('player-title').textContent = item.title;
   document.getElementById('player-play').textContent = '⏸';
   document.getElementById('audio-player-bar').classList.add('active');
-
-  incrementViews(STORES.AUDIOS, item.id);
 }
 
 function toggleAudioPlay() {
@@ -519,24 +397,19 @@ async function handleSearch(e) {
     return;
   }
 
-  const imgResults = await searchItems(STORES.IMAGES, query);
-  const vidResults = await searchItems(STORES.VIDEOS, query);
-  const audResults = await searchItems(STORES.AUDIOS, query);
+  const allItems = [
+    ...(allContent.images || []).map(i => ({...i, type: 'image'})),
+    ...(allContent.videos || []).map(i => ({...i, type: 'video'}))
+  ];
 
-  // Show search results in current section or dedicated search view
+  const results = allItems.filter(item => 
+    (item.title && item.title.includes(query)) ||
+    (item.description && item.description.includes(query))
+  );
+
   navigateTo('images');
   const container = document.getElementById('images-grid');
-  const allResults = [
-    ...imgResults.map(i => ({...i, type: 'image'})),
-    ...vidResults.map(i => ({...i, type: 'video'}))
-  ];
-  renderMediaGrid(container, allResults, 'mixed');
-
-  // Also show audio results
-  const audContainer = document.getElementById('audios-list');
-  if (audContainer && audResults.length > 0) {
-    renderAudioList(audContainer, audResults);
-  }
+  renderMediaGrid(container, results, 'mixed');
 }
 
 // ===== Admin =====
@@ -566,26 +439,12 @@ async function handleAdminLogin() {
   }
 }
 
-// ===== Contact =====
-function handleContactSubmit(e) {
-  e.preventDefault();
-  const name = document.getElementById('contact-name').value;
-  const email = document.getElementById('contact-email').value;
-  const message = document.getElementById('contact-message').value;
-
-  // In a real app, send to server
-  showToast('تم إرسال رسالتك بنجاح', 'success');
-  e.target.reset();
-}
-
 // ===== PWA =====
 function setupPWA() {
-  // Register service worker
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(err => console.error('SW error:', err));
   }
 
-  // Install prompt
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
@@ -628,14 +487,6 @@ function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
-}
-
-async function hashString(str) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(str);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
 function showToast(message, type = 'info') {
