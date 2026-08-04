@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#1a1a1a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="description" content="تطبيق الحشد الفاطمي - صور وفيديوهات ومقاطع صوتية">
+  <meta name="apple-mobile-web-app-title" content="الحشد الفاطمي">
+  <title>الحشد الفاطمي</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+  <link rel="icon" type="image/png" href="icons/icon-72x72.png">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Background Effects -->
+  <div class="bg-gradient"></div>
+  <div class="bg-noise"></div>
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-content">
+      <div class="logo-container" id="app-logo">
+        <img src="icons/icon-192x192.png" alt="شعار الحشد الفاطمي" class="logo-img" id="logo-img">
+      </div>
+      <h1 class="app-title">الحشد الفاطمي</h1>
+    </div>
+  </header>
+
+  <!-- ===== HOME SECTION ===== -->
+  <div id="section-home" class="section-container active">
+    <!-- Search -->
+    <div class="search-container">
+      <div class="search-box">
+        <input type="text" class="search-input" id="search-input" placeholder="ابحث في الصور والفيديوهات والمقاطع الصوتية...">
+        <span class="search-icon">🔍</span>
+      </div>
+    </div>
+
+    <!-- Categories Grid -->
+    <div class="categories-grid">
+      <div class="glass-card category-card" onclick="navigateTo('images')">
+        <div class="category-icon">🖼</div>
+        <div class="category-name">الصور</div>
+        <div class="category-count" id="count-images">0</div>
+      </div>
+      <div class="glass-card category-card" onclick="navigateTo('videos')">
+        <div class="category-icon">🎥</div>
+        <div class="category-name">الفيديوهات</div>
+        <div class="category-count" id="count-videos">0</div>
+      </div>
+      <div class="glass-card category-card" onclick="navigateTo('audios')">
+        <div class="category-icon">🎧</div>
+        <div class="category-name">المقاطع الصوتية</div>
+        <div class="category-count" id="count-audios">0</div>
+      </div>
+      <div class="glass-card category-card" onclick="navigateTo('latest')">
+        <div class="category-icon">⭐</div>
+        <div class="category-name">أحدث الإضافات</div>
+        <div class="category-count">جديد</div>
+      </div>
+      <div class="glass-card category-card" onclick="navigateTo('popular')">
+        <div class="category-icon">🔥</div>
+        <div class="category-name">الأكثر مشاهدة</div>
+        <div class="category-count">شائع</div>
+      </div>
+      <div class="glass-card category-card" onclick="navigateTo('favorites')">
+        <div class="category-icon">❤️</div>
+        <div class="category-name">المفضلة</div>
+        <div class="category-count" id="count-favorites">0</div>
+      </div>
+      <div class="glass-card category-card" onclick="navigateTo('about')">
+        <div class="category-icon">ℹ️</div>
+        <div class="category-name">حول التطبيق</div>
+        <div class="category-count">معلومات</div>
+      </div>
+      <div class="glass-card category-card" onclick="navigateTo('contact')">
+        <div class="category-icon">📩</div>
+        <div class="category-name">تواصل معنا</div>
+        <div class="category-count">راسلنا</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== IMAGES SECTION ===== -->
+  <div id="section-images" class="section-container">
+    <button class="back-btn" onclick="goHome()">← الرئيسية</button>
+    <div class="section-title">
+      <h2>🖼 الصور</h2>
+      <div class="section-line"></div>
+    </div>
+    <div class="media-grid" id="images-grid"></div>
+  </div>
+
+  <!-- ===== VIDEOS SECTION ===== -->
+  <div id="section-videos" class="section-container">
+    <button class="back-btn" onclick="goHome()">← الرئيسية</button>
+    <div class="section-title">
+      <h2>🎥 الفيديوهات</h2>
+      <div class="section-line"></div>
+    </div>
+    <div class="media-grid" id="videos-grid"></div>
+  </div>
+
+  <!-- ===== AUDIOS SECTION ===== -->
+  <div id="section-audios" class="section-container">
+    <button class="back-btn" onclick="goHome()">← الرئيسية</button>
+    <div class="section-title">
+      <h2>🎧 المقاطع الصوتية</h2>
+      <div class="section-line"></div>
+    </div>
+    <div class="audio-list" id="audios-list"></div>
+  </div>
+
+  <!-- ===== LATEST SECTION ===== -->
+  <div id="section-latest" class="section-container">
+    <button class="back-btn" onclick="goHome()">← الرئيسية</button>
+    <div class="section-title">
+      <h2>⭐ أحدث الإضافات</h2>
+      <div class="section-line"></div>
+    </div>
+    <div class="section-title" style="margin-top:16px;"><h2 style="font-size:1.1rem;">صور</h2><div class="section-line"></div></div>
+    <div class="media-grid" id="latest-images"></div>
+    <div class="section-title" style="margin-top:16px;"><h2 style="font-size:1.1rem;">فيديوهات</h2><div class="section-line"></div></div>
+    <div class="media-grid" id="latest-videos"></div>
+    <div class="section-title" style="margin-top:16px;"><h2 style="font-size:1.1rem;">مقاطع صوتية</h2><div class="section-line"></div></div>
+    <div class="audio-list" id="latest-audios"></div>
+  </div>
+
+  <!-- ===== POPULAR SECTION ===== -->
+  <div id="section-popular" class="section-container">
+    <button class="back-btn" onclick="goHome()">← الرئيسية</button>
+    <div class="section-title">
+      <h2>🔥 الأكثر مشاهدة</h2>
+      <div class="section-line"></div>
+    </div>
+    <div class="section-title" style="margin-top:16px;"><h2 style="font-size:1.1rem;">صور</h2><div class="section-line"></div></div>
+    <div class="media-grid" id="popular-images"></div>
+    <div class="section-title" style="margin-top:16px;"><h2 style="font-size:1.1rem;">فيديوهات</h2><div class="section-line"></div></div>
+    <div class="media-grid" id="popular-videos"></div>
+    <div class="section-title" style="margin-top:16px;"><h2 style="font-size:1.1rem;">مقاطع صوتية</h2><div class="section-line"></div></div>
+    <div class="audio-list" id="popular-audios"></div>
+  </div>
+
+  <!-- ===== FAVORITES SECTION ===== -->
+  <div id="section-favorites" class="section-container">
+    <button class="back-btn" onclick="goHome()">← الرئيسية</button>
+    <div class="section-title">
+      <h2>❤️ المفضلة</h2>
+      <div class="section-line"></div>
+    </div>
+    <div class="media-grid" id="favorites-grid"></div>
+  </div>
+
+  <!-- ===== ABOUT SECTION ===== -->
+  <div id="section-about" class="section-container">
+    <button class="back-btn" onclick="goHome()">← الرئيسية</button>
+    <div class="section-title">
+      <h2>ℹ️ حول التطبيق</h2>
+      <div class="section-line"></div>
+    </div>
+    <div class="about-content">
+      <img src="icons/icon-192x192.png" alt="شعار الحشد الفاطمي" class="about-logo">
+      <div class="about-text">
+        <p><strong>الحشد الفاطمي</strong></p>
+        <p>تطبيق احترافي يضم مجموعة من الصور والفيديوهات والمقاطع الصوتية المختارة.</p>
+        <p>تم تصميم هذا التطبيق بأحدث معايير التصميم الحديثة ليوفر تجربة استخدام سلسة وفاخرة.</p>
+        <p>يعمل التطبيق دون اتصال بالإنترنت بعد التثبيت، مع إمكانية المشاهدة والاستماع في أي وقت.</p>
+      </div>
+      <div class="about-version">الإصدار 1.0.0</div>
+      <div style="margin-top:24px;color:var(--text-muted);font-size:0.85rem;">
+        جميع الحقوق محفوظة © 2025
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== CONTACT SECTION ===== -->
+  <div id="section-contact" class="section-container">
+    <button class="back-btn" onclick="goHome()">← الرئيسية</button>
+    <div class="section-title">
+      <h2>📩 تواصل معنا</h2>
+      <div class="section-line"></div>
+    </div>
+    <form class="contact-form" id="contact-form">
+      <div class="form-group">
+        <label class="form-label">الاسم</label>
+        <input type="text" class="form-input" id="contact-name" placeholder="أدخل اسمك" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">البريد الإلكتروني</label>
+        <input type="email" class="form-input" id="contact-email" placeholder="example@email.com" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">الرسالة</label>
+        <textarea class="form-textarea" id="contact-message" placeholder="اكتب رسالتك هنا..." required></textarea>
+      </div>
+      <button type="submit" class="submit-btn">إرسال الرسالة</button>
+    </form>
+    <div class="social-links">
+      <a href="#" class="social-btn" title="تويتر">🐦</a>
+      <a href="#" class="social-btn" title="فيسبوك">📘</a>
+      <a href="#" class="social-btn" title="إنستغرام">📷</a>
+      <a href="#" class="social-btn" title="يوتيوب">▶️</a>
+      <a href="#" class="social-btn" title="تلغرام">✈️</a>
+    </div>
+  </div>
+
+  <!-- ===== MEDIA VIEWER ===== -->
+  <div class="media-viewer" id="media-viewer">
+    <div class="viewer-content" id="viewer-content"></div>
+    <button class="viewer-close" id="viewer-close">✕</button>
+    <button class="viewer-nav viewer-prev" id="viewer-prev">‹</button>
+    <button class="viewer-nav viewer-next" id="viewer-next">›</button>
+    <div class="viewer-actions">
+      <button class="viewer-action-btn" id="viewer-download">⬇ حفظ</button>
+      <button class="viewer-action-btn" id="viewer-share">↗ مشاركة</button>
+    </div>
+  </div>
+
+  <!-- ===== AUDIO PLAYER BAR ===== -->
+  <div class="audio-player-bar" id="audio-player-bar">
+    <div class="player-progress" id="player-progress">
+      <div class="player-progress-bar" id="player-progress-bar"></div>
+    </div>
+    <img src="" alt="غلاف" class="player-cover" id="player-cover">
+    <div class="player-info">
+      <div class="player-title" id="player-title">عنوان المقطع</div>
+    </div>
+    <div class="player-controls">
+      <button class="player-btn" id="player-prev">⏮</button>
+      <button class="player-btn play" id="player-play">▶</button>
+      <button class="player-btn" id="player-next">⏭</button>
+    </div>
+  </div>
+
+  <!-- ===== ADMIN LOGIN OVERLAY ===== -->
+  <div class="admin-overlay" id="admin-overlay">
+    <div class="glass-panel admin-login-box">
+      <img src="icons/icon-192x192.png" alt="شعار" class="admin-logo">
+      <h2 class="admin-title">لوحة الإدارة</h2>
+      <div class="admin-form">
+        <input type="text" class="admin-input" id="admin-username" placeholder="اسم المستخدم" autocomplete="off">
+        <input type="password" class="admin-input" id="admin-password" placeholder="كلمة المرور" autocomplete="off">
+        <button class="admin-btn" id="admin-login-btn">تسجيل الدخول</button>
+        <div class="admin-error" id="admin-error">اسم المستخدم أو كلمة المرور غير صحيحة</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TOAST ===== -->
+  <div class="toast" id="toast"></div>
+
+  <!-- ===== INSTALL BUTTON ===== -->
+  <button class="install-btn" id="install-btn">📲 تثبيت التطبيق</button>
+
+  <!-- Scripts -->
+  <script src="js/db.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
