@@ -127,9 +127,6 @@ function navigateTo(section) {
       case 'images': loadImages(); break;
       case 'videos': loadVideos(); break;
       case 'audios': loadAudios(); break;
-      case 'latest': loadLatest(); break;
-      case 'popular': loadPopular(); break;
-      case 'favorites': loadFavorites(); break;
     }
   }
 }
@@ -144,12 +141,9 @@ async function loadHomeStats() {
     const images = await getAllItems(STORES.IMAGES, { hidden: false });
     const videos = await getAllItems(STORES.VIDEOS, { hidden: false });
     const audios = await getAllItems(STORES.AUDIOS, { hidden: false });
-    const favorites = await getFavorites();
-
     document.getElementById('count-images').textContent = images.length;
     document.getElementById('count-videos').textContent = videos.length;
     document.getElementById('count-audios').textContent = audios.length;
-    document.getElementById('count-favorites').textContent = favorites.length;
   } catch (err) {
     console.error('Stats error:', err);
   }
