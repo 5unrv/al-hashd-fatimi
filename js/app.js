@@ -563,11 +563,7 @@ async function handleAdminLogin() {
   const username = document.getElementById('admin-username').value.trim();
   const password = document.getElementById('admin-password').value;
 
-  // Hash comparison (demo: admin/admin123)
-  const hashedInput = await hashString(password);
-  const storedHash = await getSetting('admin_hash') || 'a3d3d5c5e5f5g5h5i5j5k5l5m5n5o5p5'; // placeholder
-
-  if (username === 'admin' && hashedInput === storedHash) {
+  if (username === 'admin' && password === 'admin123') {
     sessionStorage.setItem('admin_auth', 'true');
     window.location.href = 'admin.html';
   } else {
