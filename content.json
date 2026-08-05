@@ -1,14 +1,5 @@
 {
-  "images": [
-    {
-      "id": 1785872990281,
-      "title": "حرم الامام الحسين عليه السلام",
-      "description": "تصويري",
-      "url": "https://raw.githubusercontent.com/alhashedalfatimy/al-hashd-fatimi/main/uploads/1785872983862_IMG_20260801_210504.jpg",
-      "type": "image",
-      "thumbnail": "https://raw.githubusercontent.com/alhashedalfatimy/al-hashd-fatimi/main/uploads/1785872983862_IMG_20260801_210504.jpg"
-    }
-  ],
+  "images": [],
   "videos": [],
   "audios": []
 }
